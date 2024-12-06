@@ -1,7 +1,7 @@
 # Define variables
-IMAGE_NAME = shopping-list-app
+IMAGE_NAME = chatbot
 DOCKER_ID_USER = wenyeli
-PORT = 5000
+PORT = 5001
 
 # Python commands
 install:
