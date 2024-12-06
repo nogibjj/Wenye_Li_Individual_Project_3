@@ -1,6 +1,6 @@
 [![Build and Push Docker Image](https://github.com/nogibjj/Wenye_Li_Mini_Project_12/actions/workflows/cicd.yml/badge.svg)](https://github.com/nogibjj/Wenye_Li_Mini_Project_12/actions/workflows/cicd.yml)
 
-## Wenye Li Mini Project 12
+## Wenye Li Individual Project 3
 
 ## Requirements
 
