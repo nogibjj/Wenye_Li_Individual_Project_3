@@ -1,118 +1,114 @@
-from flask import Flask, render_template_string, request, redirect, url_for
+from flask import Flask, request, jsonify, render_template
+from langchain.llms import Ollama
 import os
+import json
+from datetime import datetime
 
 app = Flask(__name__)
 
-# In-memory storage for shopping list
-shopping_list = []
+# Initialize LLM
+try:
+    llm = Ollama(model="tinyllama")
+except Exception as e:
+    print(f"Warning: LLM initialization failed: {e}")
+    llm = None
 
-# HTML template (embedded in app.py for simplicity)
-HTML_TEMPLATE = '''
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Shopping List App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f0f0;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-        }
-        .delete-btn {
-            background-color: #f44336;
-        }
-        .delete-btn:hover {
-            background-color: #da190b;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Shopping List</h1>
-        <form action="/add" method="post">
-            <input type="text" name="item" placeholder="Enter item" required>
-            <button type="submit">Add Item</button>
-        </form>
-        
-        <ul>
-            {% for item in items %}
-            <li>
-                {{ item }}
-                <form action="/delete" method="post" style="margin: 0;">
-                    <input type="hidden" name="item" value="{{ item }}">
-                    <button type="submit" class="delete-btn">Delete</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-</body>
-</html>
-'''
+# Store chat history
+chat_history = []
 
 @app.route('/')
-def index():
-    return render_template_string(HTML_TEMPLATE, items=shopping_list)
+def home():
+    """Render the home page"""
+    return render_template('index.html')
 
-@app.route('/add', methods=['POST'])
-def add_item():
-    item = request.form.get('item')
-    if item and item not in shopping_list:
-        shopping_list.append(item)
-    return redirect(url_for('index'))
+@app.route("/chat", methods=["POST"])
+def chat():
+    """Handle chat requests"""
+    try:
+        data = request.json
+        message = data.get("message", "").strip()
+        
+        if not message:
+            return jsonify({"error": "Message cannot be empty"}), 400
+        
+        if llm is None:
+            return jsonify({"error": "LLM not initialized"}), 500
+            
+        # Get LLM response
+        response = llm(message)
+        
+        # Record chat history
+        chat_entry = {
+            "user_message": message,
+            "bot_response": response,
+            "timestamp": datetime.now().isoformat()
+        }
+        chat_history.append(chat_entry)
+        
+        # Remove oldest entries if history gets too long
+        if len(chat_history) > 100:
+            chat_history.pop(0)
+            
+        return jsonify({
+            "response": response,
+            "timestamp": chat_entry["timestamp"]
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error in chat endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/delete', methods=['POST'])
-def delete_item():
-    item = request.form.get('item')
-    if item in shopping_list:
-        shopping_list.remove(item)
-    return redirect(url_for('index'))
+@app.route("/history", methods=["GET"])
+def get_history():
+    """Get chat history"""
+    return jsonify(chat_history)
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+@app.route("/health")
+def health():
+    """Health check endpoint"""
+    status = {
+        "status": "healthy",
+        "llm_initialized": llm is not None,
+        "timestamp": datetime.now().isoformat()
+    }
+    return jsonify(status)
+
+def initialize_llm(max_retries=3):
+    """Initialize the LLM with retries and model pulling"""
+    import subprocess
+    import time
+
+    def pull_model():
+        try:
+            print("Attempting to pull llama2 model...")
+            result = subprocess.run(["ollama", "pull", "llama2"], 
+                                  check=True, 
+                                  capture_output=True, 
+                                  text=True)
+            print(f"Pull output: {result.stdout}")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error pulling model: {e}")
+            print(f"Error output: {e.stderr}")
+            return False
+        except FileNotFoundError:
+            print("Ollama command not found. Please install Ollama first.")
+            return False
+
+    for i in range(max_retries):
+        try:
+            return Ollama(model="llama2")
+        except Exception as e:
+            print(f"Attempt {i+1}: LLM initialization failed: {e}")
+            if "404" in str(e):  # Model not found error
+                print("Attempting to pull the model...")
+                if pull_model():
+                    print("Model pulled successfully, retrying initialization...")
+                    time.sleep(2)  # Wait for model to be ready
+                    continue
+            time.sleep(2)  # Wait before retry
+    return None
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)
