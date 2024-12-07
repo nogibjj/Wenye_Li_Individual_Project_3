@@ -1,105 +1,49 @@
-[![Build and Push Docker Image](https://github.com/nogibjj/Wenye_Li_Mini_Project_12/actions/workflows/cicd.yml/badge.svg)](https://github.com/nogibjj/Wenye_Li_Mini_Project_12/actions/workflows/cicd.yml)
+[![CI](https://github.com/nogibjj/Wenye_Li_Individual_Project_3/actions/workflows/cicd.yml/badge.svg)](https://github.com/nogibjj/Wenye_Li_Individual_Project_3/actions/workflows/cicd.yml)
 
 ## Wenye Li Individual Project 3
 
-## Requirements
+### Video
 
-Create a simple python application containerized with a dockerfile. The goal here is to both demonstrate running your application within a docker container (using docker run terminal commands) but to also build a docker image in your CI/CD pipeline which will be pushed to Docker Hub or other container management service.
+### Project Overview
 
-## Application
+This project implements an auto-scaling Flask application that integrates with TinyLlama through Ollama for natural language processing capabilities. The application provides a real-time chat interface and is deployed using AWS App Runner for automatic scaling.
 
-A simple shopping list application built with Flask and containerized with Docker.
-
-## Features
-
-- Add items to shopping list
-- Remove items from shopping list
-- Docker containerization
-- CI/CD pipeline with GitHub Actions
-- Automated deployment to Docker Hub
-
-## Local Setup
-
-1. Clone the repository:
+### Local Development
 
 ```bash
-git clone https://github.com/nogibjj/Wenye_Li_Mini_Project_12.git
-cd Wenye_Li_Mini_Project_12
-```
-
-2. Create and activate virtual environment:
-
-```bash
-python -m venv venv
-source venv/bin/activate
-```
-
-3. Install dependencies:
-
-```bash
+# Install dependencies
 make install
-```
 
-4. Run locally:
+# Install and start Ollama
+curl https://ollama.ai/install.sh | sh
+ollama serve
+ollama pull tinyllama
 
-```bash
+# Run application
 make run-local
 ```
 
-## Docker Usage
-
-1. Build image:
+### Docker Deployment
 
 ```bash
+# Build and run
 make build
-```
-
-2. Run container:
-
-```bash
 make run
 ```
 
-3. View running containers:
+### Use of DockerHub (Or equivalent)
+
+Functioning container is held on DockerHub and ECR.
 
 ```bash
-make container_show
+docker pull wenyeli/chatbot
 ```
 
-4. Stop container:
+![ECR](ECR.png)
 
-```bash
-make stop
-```
+### AWS App Runner Deployment
 
-5. Clean up:
+https://g2wttvnjwp.us-east-1.awsapprunner.com/
 
-```bash
-make clean
-```
-
-## CI/CD Pipeline
-
-This project uses GitHub Actions for CI/CD:
-
-- Automatically builds Docker image
-- Pushes to Docker Hub
-- Triggered on push to main branch
-
-## Docker Hub
-
-The Docker image is available at:
-
-```
-docker pull wenyeli/shopping-list-app:latest
-```
-
-## Commands
-
-- `make install`: Install dependencies
-- `make run-local`: Run app locally
-- `make build`: Build Docker image
-- `make run`: Run Docker container
-- `make stop`: Stop container
-- `make clean`: Clean up resources
-- `make check-port`: Check port usage
+Deploy using AWS App Runner.
+![runner](runner.png)
