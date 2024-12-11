@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from langchain.llms import Ollama
 import os
-import json
 from datetime import datetime
 
 app = Flask(__name__)
@@ -16,10 +15,12 @@ except Exception as e:
 # Store chat history
 chat_history = []
 
-@app.route('/')
+
+@app.route("/")
 def home():
     """Render the home page"""
-    return render_template('index.html')
+    return render_template("index.html")
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -27,41 +28,40 @@ def chat():
     try:
         data = request.json
         message = data.get("message", "").strip()
-        
+
         if not message:
             return jsonify({"error": "Message cannot be empty"}), 400
-        
+
         if llm is None:
             return jsonify({"error": "LLM not initialized"}), 500
-            
+
         # Get LLM response
         response = llm(message)
-        
+
         # Record chat history
         chat_entry = {
             "user_message": message,
             "bot_response": response,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         chat_history.append(chat_entry)
-        
+
         # Remove oldest entries if history gets too long
         if len(chat_history) > 100:
             chat_history.pop(0)
-            
-        return jsonify({
-            "response": response,
-            "timestamp": chat_entry["timestamp"]
-        })
-        
+
+        return jsonify({"response": response, "timestamp": chat_entry["timestamp"]})
+
     except Exception as e:
         app.logger.error(f"Error in chat endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/history", methods=["GET"])
 def get_history():
     """Get chat history"""
     return jsonify(chat_history)
+
 
 @app.route("/health")
 def health():
@@ -69,9 +69,10 @@ def health():
     status = {
         "status": "healthy",
         "llm_initialized": llm is not None,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
     return jsonify(status)
+
 
 def initialize_llm(max_retries=3):
     """Initialize the LLM with retries and model pulling"""
@@ -81,10 +82,9 @@ def initialize_llm(max_retries=3):
     def pull_model():
         try:
             print("Attempting to pull llama2 model...")
-            result = subprocess.run(["ollama", "pull", "llama2"], 
-                                  check=True, 
-                                  capture_output=True, 
-                                  text=True)
+            result = subprocess.run(
+                ["ollama", "pull", "llama2"], check=True, capture_output=True, text=True
+            )
             print(f"Pull output: {result.stdout}")
             return True
         except subprocess.CalledProcessError as e:
@@ -109,6 +109,7 @@ def initialize_llm(max_retries=3):
             time.sleep(2)  # Wait before retry
     return None
 
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)

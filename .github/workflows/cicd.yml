@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: CI/CD Pipeline
 
 on:
   push:
@@ -12,6 +12,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Format code with Black
+        run: make format
+
+      - name: Lint with Ruff
+        run: make lint
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2

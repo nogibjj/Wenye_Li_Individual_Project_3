@@ -7,6 +7,12 @@ PORT = 5001
 install:
 	pip install --upgrade pip && pip install -r requirements.txt
 
+lint:
+	ruff check .
+
+format:
+	black .
+
 run-local:
 	python app.py
 
