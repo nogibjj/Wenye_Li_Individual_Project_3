@@ -31,9 +31,39 @@ make build
 make run
 ```
 
+### AWS Deployment
+
+#### Download AWS CLI:
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt-get update && sudo apt-get install -y unzip
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+#### Configure AWS CLI
+
+```bash
+aws configure
+```
+
+#### Push to ECR
+
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+docker tag chatbot:latest $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot:latest
+docker push $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/chatbot:latest
+```
+
+### Flask Application
+
+- Real-time chat interface
+- TinyLlama model integration via Ollama
+
 ### Use of DockerHub (Or equivalent)
 
-Functioning container is held on DockerHub and ECR.
+Functioning container is held on both DockerHub and ECR.
 
 ```bash
 docker pull wenyeli/chatbot
@@ -45,5 +75,6 @@ docker pull wenyeli/chatbot
 
 https://g2wttvnjwp.us-east-1.awsapprunner.com/
 
-Deploy using AWS App Runner.
+The application is deployed using AWS App Runner, providing automatic scaling based on traffic.
 ![runner](runner.png)
+![auto-scaling](auto-scaling.png)
