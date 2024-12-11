@@ -4,6 +4,8 @@
 
 ### Video
 
+[Demo on YouTube](https://youtu.be/EEg1Dv66DNE)
+
 ### Project Overview
 
 This project implements an auto-scaling Flask application that integrates with TinyLlama through Ollama for natural language processing capabilities. The application provides a real-time chat interface and is deployed using AWS App Runner for automatic scaling.
